@@ -1,3 +1,7 @@
+/**
+ * 用户管理组件
+ * 实现用户的增删改查功能，包含表单验证和错误处理
+ */
 import { useUserIds ,useUser } from "../services/queries"
 import { useIsFetching } from '@tanstack/react-query'
 import { useCreateUser, useDeleteUser, useUpdateUser } from "../services/mutations"
@@ -9,17 +13,41 @@ import { useState } from 'react'
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons'
 
 export default function User() {
+    // 获取用户ID列表的查询
     const userNameQuery = useUserIds()
+    // 根据ID列表批量获取用户详细信息
     const userQueries = useUser(userNameQuery.data)
+    // 获取当前正在进行的查询数量
     const isFetching = useIsFetching()
+    
+    // 控制更新用户模态框的显示状态
     const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false)
+    // 存储当前选中的用户信息
     const [selectedUser, setSelectedUser] = useState<UserType | null>(null)
 
+    // 创建用户的mutation hook
     const createUserMutation = useCreateUser()
-    const { register: createRegister, handleSubmit: handleCreateSubmit, formState: { errors: createErrors }, reset: createReset } = useForm<UserType>()
+    // 创建用户表单的hook
+    const { 
+        register: createRegister, 
+        handleSubmit: handleCreateSubmit, 
+        formState: { errors: createErrors }, 
+        reset: createReset 
+    } = useForm<UserType>()
 
-    const { register: updateRegister, handleSubmit: handleUpdateSubmit, formState: { errors: updateErrors }, reset: updateReset, setValue } = useForm<UserType>()
+    // 更新用户表单的hook
+    const { 
+        register: updateRegister, 
+        handleSubmit: handleUpdateSubmit, 
+        formState: { errors: updateErrors }, 
+        reset: updateReset, 
+        setValue 
+    } = useForm<UserType>()
 
+    /**
+     * 处理创建用户的提交事件
+     * @param {UserType} data - 表单提交的用户数据
+     */
     const handleCreateUser: SubmitHandler<UserType> = async (data) => {
         try {
             await createUserMutation.mutateAsync(data)
@@ -30,7 +58,12 @@ export default function User() {
         }
     }
 
+    // 更新用户的mutation hook
     const updateUserMutation = useUpdateUser()
+    /**
+     * 处理更新用户的提交事件
+     * @param {UserType} data - 表单提交的用户数据
+     */
     const handleUpdateUser: SubmitHandler<UserType> = async (data) => {
         try {
             await updateUserMutation.mutateAsync(data)
@@ -42,7 +75,12 @@ export default function User() {
         }
     }
 
+    // 删除用户的mutation hook
     const deleteUserMutation = useDeleteUser()
+    /**
+     * 处理删除用户事件
+     * @param {number} id - 要删除的用户ID
+     */
     const handleDeleteUser = async (id: number) => {
         try {
             await deleteUserMutation.mutateAsync(id)
@@ -52,6 +90,10 @@ export default function User() {
         }
     }
 
+    /**
+     * 显示更新用户的模态框
+     * @param {UserType} user - 要更新的用户信息
+     */
     const showUpdateModal = (user: UserType) => {
         setSelectedUser(user)
         // 预填充表单数据
@@ -63,6 +105,7 @@ export default function User() {
     }
 
     return <>
+        {/* 创建用户表单 */}
         <form onSubmit={handleCreateSubmit(handleCreateUser)} style={{
             maxWidth: '400px',
             margin: '20px auto',
@@ -70,6 +113,7 @@ export default function User() {
             border: '1px solid #ddd',
             borderRadius: '8px'
         }}>
+            {/* 用户名输入字段 */}
             <div style={{ marginBottom: '15px' }}>
                 <label htmlFor="name" style={{ display: 'block', marginBottom: '5px' }}>姓名：</label>
                 <input
@@ -90,6 +134,7 @@ export default function User() {
                 {createErrors.name && <span style={{ color: 'red', fontSize: '12px' }}>{createErrors.name.message}</span>}
             </div>
 
+            {/* 邮箱输入字段 */}
             <div style={{ marginBottom: '15px' }}>
                 <label htmlFor="email" style={{ display: 'block', marginBottom: '5px' }}>邮箱：</label>
                 <input
@@ -113,6 +158,7 @@ export default function User() {
                 {createErrors.email && <span style={{ color: 'red', fontSize: '12px' }}>{createErrors.email.message}</span>}
             </div>
 
+            {/* 头像URL输入字段 */}
             <div style={{ marginBottom: '15px' }}>
                 <label htmlFor="avatar" style={{ display: 'block', marginBottom: '5px' }}>头像URL：</label>
                 <input
@@ -136,6 +182,7 @@ export default function User() {
                 {createErrors.avatar && <span style={{ color: 'red', fontSize: '12px' }}>{createErrors.avatar.message}</span>}
             </div>
 
+            {/* 提交按钮 */}
             <button
                 type="submit"
                 disabled={createUserMutation.isPending}
@@ -153,12 +200,15 @@ export default function User() {
             </button>
         </form>
 
+        {/* 查询状态显示 */}
         <h4>查询请求的数量isFetching:{isFetching}</h4>
         <h4>获取的网络状态fetchStatus：{userNameQuery.fetchStatus}</h4>
         <h4>查询的整体状态status：{userNameQuery.status}</h4>
 
+        {/* 显示用户ID列表 */}
         {userNameQuery.data?.map((name, index) => <div key={index}>{name}</div>)}
 
+        {/* 用户详细信息列表 */}
         <h3>通过id值获取到的用户信息</h3>
         <ul style={{ listStyle: 'none', padding: 0 }}>
             {userQueries?.map(({ data }, index) => (
@@ -169,11 +219,13 @@ export default function User() {
                     borderRadius: '4px'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        {/* 用户信息显示 */}
                         <div>
                             <div>ID: {data?.id}</div>
                             <div>姓名: {data?.name}</div>
                             <div>邮箱: {data?.email}</div>
                         </div>
+                        {/* 操作按钮 */}
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <Button
                                 type="primary"
@@ -203,6 +255,7 @@ export default function User() {
             ))}
         </ul>
 
+        {/* 更新用户模态框 */}
         <Modal
             title="修改用户信息"
             open={isUpdateModalVisible}
@@ -211,6 +264,7 @@ export default function User() {
         >
             <form onSubmit={handleUpdateSubmit(handleUpdateUser)}>
                 <input type="hidden" {...updateRegister('id')} />
+                {/* 用户名输入字段 */}
                 <div style={{ marginBottom: '15px' }}>
                     <label htmlFor="update-name" style={{ display: 'block', marginBottom: '5px' }}>姓名：</label>
                     <input
@@ -231,6 +285,7 @@ export default function User() {
                     {updateErrors.name && <span style={{ color: 'red', fontSize: '12px' }}>{updateErrors.name.message}</span>}
                 </div>
 
+                {/* 邮箱输入字段 */}
                 <div style={{ marginBottom: '15px' }}>
                     <label htmlFor="update-email" style={{ display: 'block', marginBottom: '5px' }}>邮箱：</label>
                     <input
@@ -254,6 +309,7 @@ export default function User() {
                     {updateErrors.email && <span style={{ color: 'red', fontSize: '12px' }}>{updateErrors.email.message}</span>}
                 </div>
 
+                {/* 头像URL输入字段 */}
                 <div style={{ marginBottom: '15px' }}>
                     <label htmlFor="update-avatar" style={{ display: 'block', marginBottom: '5px' }}>头像URL：</label>
                     <input
@@ -277,6 +333,7 @@ export default function User() {
                     {updateErrors.avatar && <span style={{ color: 'red', fontSize: '12px' }}>{updateErrors.avatar.message}</span>}
                 </div>
 
+                {/* 模态框底部按钮 */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                     <Button onClick={() => setIsUpdateModalVisible(false)}>
                         取消
